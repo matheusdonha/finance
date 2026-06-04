@@ -553,9 +553,12 @@ body {
     <div class="page" id="page-evolucao">
       <div class="section-header">
         <div><div class="section-title">Evolução <span class="accent">Patrimonial</span></div><div class="section-sub">Histórico de todos os alinhamentos</div></div>
-        <div class="toggle-group">
-          <button class="toggle-btn active" onclick="setEvolView('total',this)">Total</button>
-          <button class="toggle-btn" onclick="setEvolView('contas',this)">Por Conta</button>
+        <div style="display:flex;gap:10px;align-items:center">
+          <div class="toggle-group">
+            <button class="toggle-btn active" onclick="setEvolView('total',this)">Total</button>
+            <button class="toggle-btn" onclick="setEvolView('contas',this)">Por Conta</button>
+          </div>
+          <button class="btn btn-primary" onclick="openModal('mBalanceamento')">+ Novo Balanceamento</button>
         </div>
       </div>
       <div class="card">
@@ -571,9 +574,9 @@ body {
         </div>
         <div class="card-body-flush">
           <table class="data-table"><thead><tr>
-            <th>Data</th><th>Banco MRD</th><th>Inter</th><th>Nubank</th>
-            <th>Home Broker</th><th>Binance</th><th>Outros</th><th>Total</th>
-          </tr></thead><tbody id="tbEvol"><tr class="spinner-row"><td colspan="8"><div class="spinner"></div></td></tr></tbody></table>
+            <th>Data</th><th>Banco MRD</th><th>ATM+</th><th>Inter</th><th>Livre</th>
+            <th>Nubank</th><th>Home Broker</th><th>BTG</th><th>Binance</th><th>Dólar</th><th>Outros</th><th>Total</th><th></th>
+          </tr></thead><tbody id="tbEvol"><tr class="spinner-row"><td colspan="13"><div class="spinner"></div></td></tr></tbody></table>
         </div>
       </div>
     </div>
@@ -634,8 +637,8 @@ body {
         </div>
         <div class="card-body-flush">
           <table class="data-table"><thead><tr>
-            <th>Data</th><th>Valor</th><th>Origem</th><th>Destino</th><th>Total Acum.</th>
-          </tr></thead><tbody id="tbAporte"><tr class="spinner-row"><td colspan="5"><div class="spinner"></div></td></tr></tbody></table>
+            <th>Data</th><th>Valor</th><th>Origem</th><th>Destino</th><th>Total Acum.</th><th></th>
+          </tr></thead><tbody id="tbAporte"><tr class="spinner-row"><td colspan="6"><div class="spinner"></div></td></tr></tbody></table>
         </div>
       </div>
     </div>
@@ -660,8 +663,8 @@ body {
         <div class="card-header"><span class="card-title">Histórico de Resgates</span></div>
         <div class="card-body-flush">
           <table class="data-table"><thead><tr>
-            <th>Data</th><th>Valor</th><th>Origem</th><th>Motivo</th>
-          </tr></thead><tbody id="tbResgate"><tr class="spinner-row"><td colspan="4"><div class="spinner"></div></td></tr></tbody></table>
+            <th>Data</th><th>Valor</th><th>Origem</th><th>Motivo</th><th></th>
+          </tr></thead><tbody id="tbResgate"><tr class="spinner-row"><td colspan="5"><div class="spinner"></div></td></tr></tbody></table>
         </div>
       </div>
     </div>
@@ -703,8 +706,8 @@ body {
         </div>
         <div class="card-body-flush">
           <table class="data-table"><thead><tr>
-            <th>Data</th><th>Descrição</th><th>Valor</th><th>Pagamento</th><th>Categoria</th>
-          </tr></thead><tbody id="tbGastos"><tr class="spinner-row"><td colspan="5"><div class="spinner"></div></td></tr></tbody></table>
+            <th>Data</th><th>Descrição</th><th>Valor</th><th>Pagamento</th><th>Categoria</th><th></th>
+          </tr></thead><tbody id="tbGastos"><tr class="spinner-row"><td colspan="6"><div class="spinner"></div></td></tr></tbody></table>
         </div>
       </div>
     </div>
@@ -778,6 +781,62 @@ body {
         <button class="btn btn-save btn-full" onclick="saveGasto()">Salvar</button>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- Modal: Novo Balanceamento -->
+<div class="modal-overlay" id="mBalanceamento">
+  <div class="modal" style="width:520px">
+    <div class="modal-header"><span class="modal-title">Novo Balanceamento</span><button class="modal-close" onclick="closeModal('mBalanceamento')">✕</button></div>
+    <div class="modal-body">
+      <div style="font-size:10px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:12px">Data: <strong style="color:var(--green)" id="balData"></strong></div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Banco MRD</label><input class="form-input" type="number" step="0.01" placeholder="0,00" id="b_mrd"></div>
+        <div class="form-group"><label class="form-label">ATM+</label><input class="form-input" type="number" step="0.01" placeholder="0,00" id="b_atm"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Inter Matheus</label><input class="form-input" type="number" step="0.01" placeholder="0,00" id="b_inter"></div>
+        <div class="form-group"><label class="form-label">Livre</label><input class="form-input" type="number" step="0.01" placeholder="0,00" id="b_livre"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Nubank (caixinhas)</label><input class="form-input" type="number" step="0.01" placeholder="0,00" id="b_nubank"></div>
+        <div class="form-group"><label class="form-label">Dinheiro</label><input class="form-input" type="number" step="0.01" placeholder="0,00" id="b_dinheiro"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Home Broker PAI</label><input class="form-input" type="number" step="0.01" placeholder="0,00" id="b_hbpai"></div>
+        <div class="form-group"><label class="form-label">Home Broker Inter</label><input class="form-input" type="number" step="0.01" placeholder="0,00" id="b_hbinter"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">BTG</label><input class="form-input" type="number" step="0.01" placeholder="0,00" id="b_btg"></div>
+        <div class="form-group"><label class="form-label">Binance</label><input class="form-input" type="number" step="0.01" placeholder="0,00" id="b_binance"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Dólar</label><input class="form-input" type="number" step="0.01" placeholder="0,00" id="b_dolar"></div>
+        <div class="form-group"><label class="form-label">A investir</label><input class="form-input" type="number" step="0.01" placeholder="0,00" id="b_ainvestir"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Cartão (este mês)</label><input class="form-input" type="number" step="0.01" placeholder="0,00" id="b_cartao"></div>
+        <div class="form-group"><label class="form-label">Próximo(s)</label><input class="form-input" type="number" step="0.01" placeholder="0,00" id="b_proximo"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Outros (PicPay, CartPanda, etc.)</label><input class="form-input" type="number" step="0.01" placeholder="0,00" id="b_outros"></div>
+      <div class="form-group"><label class="form-label">Observação</label><input class="form-input" type="text" placeholder="opcional..." id="b_obs"></div>
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px 14px;margin:14px 0;display:flex;justify-content:space-between;align-items:center">
+        <span style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px">Total Calculado</span>
+        <span style="font-family:'Syne',sans-serif;font-size:20px;font-weight:700;color:var(--green)" id="balTotal">R$ 0,00</span>
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-full" onclick="closeModal('mBalanceamento')">Cancelar</button>
+        <button class="btn btn-save btn-full" onclick="saveBalanceamento()">Salvar Balanceamento</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Editar genérico -->
+<div class="modal-overlay" id="mEditar">
+  <div class="modal">
+    <div class="modal-header"><span class="modal-title" id="mEditarTitle">Editar</span><button class="modal-close" onclick="closeModal('mEditar')">✕</button></div>
+    <div class="modal-body" id="mEditarBody"></div>
   </div>
 </div>
 
@@ -916,6 +975,11 @@ function excelSerial(n) {
 function parseAnyDate(val) {
   if (!val) return null;
   const s = String(val).trim();
+  // ISO datetime: 2026-01-31T03:00:00.000Z (Apps Script format)
+  if (s.includes('T') && s.includes('Z')) {
+    const d = new Date(s);
+    if (!isNaN(d)) return d;
+  }
   // dd/mm/yyyy
   const dmy = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
   if (dmy) return new Date(+dmy[3], +dmy[2]-1, +dmy[1]);
@@ -930,7 +994,7 @@ function parseAnyDate(val) {
 
 function fmtDate(val) {
   const d = parseAnyDate(val);
-  if (d && !isNaN(d)) return d.toLocaleDateString('pt-BR');
+  if (d && !isNaN(d)) return d.toLocaleDateString('pt-BR', {day:'2-digit',month:'2-digit',year:'numeric'});
   return val || '—';
 }
 
@@ -996,11 +1060,7 @@ function closeSidebar() {
 }
 
 // ── MODALS ───────────────────────────────────────────────────────
-function openModal(id) {
-  const today = new Date().toISOString().split('T')[0];
-  document.querySelectorAll(`#${id} input[type=date]`).forEach(i => { if(!i.value) i.value = today; });
-  document.getElementById(id).classList.add('open');
-}
+// openModal defined below
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
 document.querySelectorAll('.modal-overlay').forEach(o => {
   o.addEventListener('click', e => { if (e.target===o) o.classList.remove('open'); });
@@ -1030,6 +1090,9 @@ async function loadAll() {
 
     // alinhamento — cada linha é um snapshot com coluna "Todos"
     S.ali = aliRows.filter(r => {
+      const dateVal = r['Mês'] || r['Data'] || Object.values(r)[0];
+      // exclude rows with no valid date or non-numeric total
+      if (!dateVal || String(dateVal).startsWith('COMPRA') || String(dateVal).startsWith('OBS')) return false;
       const total = parseFloat(r['Todos'] || r['Total'] || r['TOTAL'] || 0);
       return total > 0;
     });
@@ -1269,25 +1332,36 @@ function renderEvolChart() {
 function renderEvolTable() {
   const ali = S.ali;
   if (!ali.length) {
-    document.getElementById('tbEvol').innerHTML = '<tr><td colspan="8"><div class="empty"><div class="icon">↗</div><p>Nenhum dado encontrado</p></div></td></tr>';
+    document.getElementById('tbEvol').innerHTML = '<tr><td colspan="13"><div class="empty"><div class="icon">↗</div><p>Nenhum dado encontrado</p></div></td></tr>';
     return;
   }
-  document.getElementById('tbEvol').innerHTML = [...ali].reverse().map(r => {
+  document.getElementById('tbEvol').innerHTML = [...ali].reverse().map((r, i) => {
+    const idx = ali.length - 1 - i;
     const outros = (parseFloat(r['CartPanda'])||0)+(parseFloat(r['PicPay'])||0)+
-                   (parseFloat(r['Dinheiro'])||0)+(parseFloat(r['A investir'])||0)+
-                   (parseFloat(r['Dólar'])||0);
+                   (parseFloat(r['Outros'])||0);
     const hbTotal = (parseFloat(r['Home Broker PAI'])||0)+(parseFloat(r['Home Broker Inter'])||0);
+    const rowId = r['_id'] || r['Obs:'] || getAliDate(r);
     return `<tr>
       <td class="nowrap">${fmtDate(getAliDate(r))}</td>
-      <td>R$ ${brl(r['Banco MRD'])}</td>
-      <td>R$ ${brl(r['Banco Inter Matheus'])}</td>
-      <td>R$ ${brl(r['Nubank (caxinhas)'])}</td>
-      <td>R$ ${brl(hbTotal)}</td>
-      <td>R$ ${brl(r['Binance'])}</td>
-      <td>R$ ${brl(outros)}</td>
+      <td>${v(r['Banco MRD'])}</td>
+      <td>${v(r['BANCO 62775']||r['ATM+'])}</td>
+      <td>${v(r['Banco Inter Matheus'])}</td>
+      <td>${v(r['Meu dinheiro (livre)'])}</td>
+      <td>${v(r['Nubank (caxinhas)'])}</td>
+      <td>${v(hbTotal)}</td>
+      <td>${v(r['BTG'])}</td>
+      <td>${v(r['Binance'])}</td>
+      <td>${v(r['Dólar'])}</td>
+      <td>${v(outros)}</td>
       <td class="text-green bold">R$ ${brl(getAliTotal(r))}</td>
+      <td><button class="btn" style="padding:4px 8px;font-size:10px;color:var(--red);border-color:#FF4D6D30" onclick="deleteBalanceamento(${idx})">✕</button></td>
     </tr>`;
   }).join('');
+}
+
+function v(val) {
+  const n = parseFloat(val)||0;
+  return n ? 'R$ '+brl(n) : '<span style="color:var(--muted)">—</span>';
 }
 
 // ── PROJEÇÃO ─────────────────────────────────────────────────────
@@ -1351,19 +1425,24 @@ function renderAportes() {
   document.getElementById('aporteCount').textContent = ap.length+' aportes';
 
   if (!ap.length) {
-    document.getElementById('tbAporte').innerHTML = '<tr><td colspan="5"><div class="empty"><div class="icon">⊕</div><p>Nenhum aporte registrado</p></div></td></tr>';
+    document.getElementById('tbAporte').innerHTML = '<tr><td colspan="6"><div class="empty"><div class="icon">⊕</div><p>Nenhum aporte registrado</p></div></td></tr>';
     return;
   }
   let acum = 0;
-  document.getElementById('tbAporte').innerHTML = [...ap].reverse().map(r => {
-    const v = parseFloat(r['APORTE']||r['Aporte'])||0;
-    acum += v;
+  document.getElementById('tbAporte').innerHTML = [...ap].reverse().map((r, i) => {
+    const val = parseFloat(r['APORTE']||r['Aporte'])||0;
+    const idx = ap.length - 1 - i;
+    acum += val;
     return `<tr>
       <td class="nowrap">${fmtDate(r['DATA']||r['Data'])}</td>
-      <td class="text-green bold">R$ ${brl(v)}</td>
+      <td class="text-green bold">R$ ${brl(val)}</td>
       <td class="text-muted">${r['Origem']||'—'}</td>
       <td class="text-muted">${r['Destino']||'—'}</td>
       <td>R$ ${brl(acum)}</td>
+      <td style="white-space:nowrap">
+        <button class="btn" style="padding:4px 8px;font-size:10px" onclick="editAporte(${idx})">✏️</button>
+        <button class="btn" style="padding:4px 8px;font-size:10px;color:var(--red);border-color:#FF4D6D30;margin-left:4px" onclick="deleteAporte(${idx})">✕</button>
+      </td>
     </tr>`;
   }).join('');
 }
@@ -1392,12 +1471,19 @@ function renderResgates() {
     document.getElementById('tbResgate').innerHTML = '<tr><td colspan="4"><div class="empty"><div class="icon">⊖</div><p>Nenhum resgate registrado</p></div></td></tr>';
     return;
   }
-  document.getElementById('tbResgate').innerHTML = [...rg].reverse().map(r => `<tr>
-    <td class="nowrap">${fmtDate(r['Data']||r['DATA'])}</td>
-    <td class="text-red bold">R$ ${brl(r['Valor']||r['VALOR'])}</td>
-    <td class="text-muted">${r['Origem']||'—'}</td>
-    <td>${r['Motivo']||r['MOTIVO']||'—'}</td>
-  </tr>`).join('');
+  document.getElementById('tbResgate').innerHTML = [...rg].reverse().map((r, i) => {
+    const idx = rg.length - 1 - i;
+    return `<tr>
+      <td class="nowrap">${fmtDate(r['Data']||r['DATA'])}</td>
+      <td class="text-red bold">R$ ${brl(r['Valor']||r['VALOR'])}</td>
+      <td class="text-muted">${r['Origem']||'—'}</td>
+      <td>${r['Motivo']||r['MOTIVO']||'—'}</td>
+      <td style="white-space:nowrap">
+        <button class="btn" style="padding:4px 8px;font-size:10px" onclick="editResgate(${idx})">✏️</button>
+        <button class="btn" style="padding:4px 8px;font-size:10px;color:var(--red);border-color:#FF4D6D30;margin-left:4px" onclick="deleteResgate(${idx})">✕</button>
+      </td>
+    </tr>`;
+  }).join('');
 }
 
 // ── GASTOS ───────────────────────────────────────────────────────
@@ -1431,12 +1517,18 @@ function renderGastosTable(filter='') {
     document.getElementById('tbGastos').innerHTML = '<tr><td colspan="5"><div class="empty"><div class="icon">◎</div><p>Nenhum gasto registrado ainda.<br>Use o botão "+ Registrar Gasto" para começar.</p></div></td></tr>';
     return;
   }
-  document.getElementById('tbGastos').innerHTML = [...filtered].reverse().map(r => `<tr>
-    <td class="nowrap">${r['Data']||'—'}</td>
+  // map filtered back to original indices
+  const filteredWithIdx = filtered.map(r => ({ r, idx: S.gastos.indexOf(r) }));
+  document.getElementById('tbGastos').innerHTML = [...filteredWithIdx].reverse().map(({r, idx}) => `<tr>
+    <td class="nowrap">${fmtDate(r['Data'])||'—'}</td>
     <td>${r['Nome']||'—'}</td>
     <td class="text-red bold">R$ ${brl(r['Valor'])}</td>
     <td><span class="badge badge-muted">${r['Forma de pagamento']||'—'}</span></td>
     <td><span class="badge ${catBadge[r['Categoria']]||'badge-muted'}">${r['Categoria']||'—'}</span></td>
+    <td style="white-space:nowrap">
+      <button class="btn" style="padding:4px 8px;font-size:10px" onclick="editGasto(${idx})">✏️</button>
+      <button class="btn" style="padding:4px 8px;font-size:10px;color:var(--red);border-color:#FF4D6D30;margin-left:4px" onclick="deleteGasto(${idx})">✕</button>
+    </td>
   </tr>`).join('');
 }
 
@@ -1517,6 +1609,232 @@ async function saveGasto() {
   ['gData','gNome','gValor'].forEach(id=>document.getElementById(id).value='');
   toast('Gasto registrado!');
 }
+
+// ── BALANCEAMENTO ────────────────────────────────────────────────
+function openModal(id) {
+  if (id === 'mBalanceamento') {
+    const today = new Date().toLocaleDateString('pt-BR');
+    document.getElementById('balData').textContent = today;
+    // wire up live total
+    const fields = ['b_mrd','b_atm','b_inter','b_livre','b_nubank','b_dinheiro',
+                    'b_hbpai','b_hbinter','b_btg','b_binance','b_dolar','b_ainvestir','b_outros'];
+    fields.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.oninput = calcBalTotal;
+    });
+  } else {
+    const today = new Date().toISOString().split('T')[0];
+    document.querySelectorAll(`#${id} input[type=date]`).forEach(i => { if(!i.value) i.value = today; });
+  }
+  document.getElementById(id).classList.add('open');
+}
+
+function calcBalTotal() {
+  const fields = ['b_mrd','b_atm','b_inter','b_livre','b_nubank','b_dinheiro',
+                  'b_hbpai','b_hbinter','b_btg','b_binance','b_dolar','b_ainvestir','b_outros'];
+  const total = fields.reduce((s, id) => s + (parseFloat(document.getElementById(id)?.value)||0), 0);
+  document.getElementById('balTotal').textContent = 'R$ ' + brl(total);
+}
+
+async function saveBalanceamento() {
+  const g = id => parseFloat(document.getElementById(id)?.value)||0;
+  const hoje = new Date().toLocaleDateString('pt-BR');
+  const outros = g('b_outros');
+  const total = g('b_mrd')+g('b_atm')+g('b_inter')+g('b_livre')+g('b_nubank')+
+                g('b_dinheiro')+g('b_hbpai')+g('b_hbinter')+g('b_btg')+
+                g('b_binance')+g('b_dolar')+g('b_ainvestir')+outros;
+  const obs = document.getElementById('b_obs')?.value||'';
+  const row = [hoje, g('b_mrd'), g('b_atm'), 0, g('b_inter'), g('b_livre'),
+               g('b_nubank'), 0, g('b_dinheiro'), g('b_hbpai'), g('b_hbinter'),
+               g('b_btg'), g('b_binance'), g('b_dolar'), g('b_ainvestir'), 0, 0, total, obs];
+  const res = await apiPost('append_alinhamento', { row });
+  if (res && res.ok) {
+    // add to local state
+    S.ali.push({
+      'Mês': hoje, 'Banco MRD': g('b_mrd'), 'BANCO 62775': g('b_atm'),
+      'Banco Inter Matheus': g('b_inter'), 'Meu dinheiro (livre)': g('b_livre'),
+      'Nubank (caxinhas)': g('b_nubank'), 'Dinheiro': g('b_dinheiro'),
+      'Home Broker PAI': g('b_hbpai'), 'Home Broker Inter': g('b_hbinter'),
+      'BTG': g('b_btg'), 'Binance': g('b_binance'), 'Dólar': g('b_dolar'),
+      'A investir': g('b_ainvestir'), 'Outros': outros, 'Todos': total, 'Obs:': obs
+    });
+    renderEvol(); renderKPIs(); renderOverviewChart();
+    closeModal('mBalanceamento');
+    // clear fields
+    ['b_mrd','b_atm','b_inter','b_livre','b_nubank','b_dinheiro','b_hbpai',
+     'b_hbinter','b_btg','b_binance','b_dolar','b_ainvestir','b_outros','b_obs']
+      .forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
+    toast('Balanceamento salvo!');
+  } else {
+    toast('Erro ao salvar balanceamento', 'err');
+  }
+}
+
+async function deleteBalanceamento(idx) {
+  if (!confirm('Apagar este registro de balanceamento?')) return;
+  const r = S.ali[idx];
+  const date = getAliDate(r);
+  const res = await apiPost('delete_alinhamento', { date });
+  if (res && res.ok) {
+    S.ali.splice(idx, 1);
+    renderEvol(); renderKPIs(); renderOverviewChart();
+    toast('Registro apagado');
+  } else {
+    toast('Erro ao apagar', 'err');
+  }
+}
+
+// ── EDIT / DELETE APORTES ────────────────────────────────────────
+function editAporte(idx) {
+  const r = S.aportes[idx];
+  document.getElementById('mEditarTitle').textContent = 'Editar Aporte';
+  document.getElementById('mEditarBody').innerHTML = `
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Data</label><input class="form-input" type="date" id="ea_data" value="${isoDate(r['DATA']||r['Data'])}"></div>
+      <div class="form-group"><label class="form-label">Valor (R$)</label><input class="form-input" type="number" step="0.01" id="ea_valor" value="${parseFloat(r['APORTE']||r['Aporte'])||0}"></div>
+    </div>
+    <div class="form-group"><label class="form-label">Origem</label><input class="form-input" type="text" id="ea_origem" value="${r['Origem']||''}"></div>
+    <div class="form-group"><label class="form-label">Destino</label><input class="form-input" type="text" id="ea_destino" value="${r['Destino']||''}"></div>
+    <div class="form-actions">
+      <button class="btn btn-full" onclick="closeModal('mEditar')">Cancelar</button>
+      <button class="btn btn-save btn-full" onclick="saveEditAporte(${idx})">Salvar</button>
+    </div>`;
+  document.getElementById('mEditar').classList.add('open');
+}
+
+async function saveEditAporte(idx) {
+  const data   = document.getElementById('ea_data').value;
+  const valor  = parseFloat(document.getElementById('ea_valor').value)||0;
+  const origem = document.getElementById('ea_origem').value;
+  const destino= document.getElementById('ea_destino').value;
+  const old    = S.aportes[idx];
+  const res = await apiPost('edit_aporte', { oldDate: old['DATA']||old['Data'], oldValor: parseFloat(old['APORTE']||old['Aporte'])||0, data, valor, origem, destino });
+  if (res && res.ok) {
+    S.aportes[idx] = { ...old, DATA: data, APORTE: valor, Origem: origem, Destino: destino };
+    renderAportes(); renderKPIs();
+    closeModal('mEditar');
+    toast('Aporte atualizado');
+  } else { toast('Erro ao editar','err'); }
+}
+
+async function deleteAporte(idx) {
+  if (!confirm('Apagar este aporte?')) return;
+  const r = S.aportes[idx];
+  const res = await apiPost('delete_aporte', { date: r['DATA']||r['Data'], valor: parseFloat(r['APORTE']||r['Aporte'])||0 });
+  if (res && res.ok) {
+    S.aportes.splice(idx, 1);
+    renderAportes(); renderKPIs();
+    toast('Aporte apagado');
+  } else { toast('Erro ao apagar','err'); }
+}
+
+// ── EDIT / DELETE RESGATES ───────────────────────────────────────
+function editResgate(idx) {
+  const r = S.resgates[idx];
+  document.getElementById('mEditarTitle').textContent = 'Editar Resgate';
+  document.getElementById('mEditarBody').innerHTML = `
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Data</label><input class="form-input" type="date" id="er_data" value="${isoDate(r['Data']||r['DATA'])}"></div>
+      <div class="form-group"><label class="form-label">Valor (R$)</label><input class="form-input" type="number" step="0.01" id="er_valor" value="${parseFloat(r['Valor']||r['VALOR'])||0}"></div>
+    </div>
+    <div class="form-group"><label class="form-label">Origem</label><input class="form-input" type="text" id="er_origem" value="${r['Origem']||''}"></div>
+    <div class="form-group"><label class="form-label">Motivo</label><input class="form-input" type="text" id="er_motivo" value="${r['Motivo']||''}"></div>
+    <div class="form-actions">
+      <button class="btn btn-full" onclick="closeModal('mEditar')">Cancelar</button>
+      <button class="btn btn-save btn-full" onclick="saveEditResgate(${idx})">Salvar</button>
+    </div>`;
+  document.getElementById('mEditar').classList.add('open');
+}
+
+async function saveEditResgate(idx) {
+  const data   = document.getElementById('er_data').value;
+  const valor  = parseFloat(document.getElementById('er_valor').value)||0;
+  const origem = document.getElementById('er_origem').value;
+  const motivo = document.getElementById('er_motivo').value;
+  const old    = S.resgates[idx];
+  const res = await apiPost('edit_resgate', { oldDate: old['Data']||old['DATA'], oldValor: parseFloat(old['Valor']||old['VALOR'])||0, data, valor, origem, motivo });
+  if (res && res.ok) {
+    S.resgates[idx] = { ...old, Data: data, Valor: valor, Origem: origem, Motivo: motivo };
+    renderResgates();
+    closeModal('mEditar');
+    toast('Resgate atualizado');
+  } else { toast('Erro ao editar','err'); }
+}
+
+async function deleteResgate(idx) {
+  if (!confirm('Apagar este resgate?')) return;
+  const r = S.resgates[idx];
+  const res = await apiPost('delete_resgate', { date: r['Data']||r['DATA'], valor: parseFloat(r['Valor']||r['VALOR'])||0 });
+  if (res && res.ok) {
+    S.resgates.splice(idx, 1);
+    renderResgates();
+    toast('Resgate apagado');
+  } else { toast('Erro ao apagar','err'); }
+}
+
+// ── EDIT / DELETE GASTOS ─────────────────────────────────────────
+function editGasto(idx) {
+  const r = S.gastos[idx];
+  document.getElementById('mEditarTitle').textContent = 'Editar Gasto';
+  document.getElementById('mEditarBody').innerHTML = `
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Data</label><input class="form-input" type="date" id="eg_data" value="${isoDate(r['Data'])}"></div>
+      <div class="form-group"><label class="form-label">Valor (R$)</label><input class="form-input" type="number" step="0.01" id="eg_valor" value="${parseFloat(r['Valor'])||0}"></div>
+    </div>
+    <div class="form-group"><label class="form-label">Descrição</label><input class="form-input" type="text" id="eg_nome" value="${r['Nome']||''}"></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Pagamento</label>
+        <select class="form-select" id="eg_pag">
+          ${['Débito','Crédito','Pix','Dinheiro'].map(o=>`<option${r['Forma de pagamento']===o?' selected':''}>${o}</option>`).join('')}
+        </select>
+      </div>
+      <div class="form-group"><label class="form-label">Categoria</label>
+        <select class="form-select" id="eg_cat">
+          ${['Alimentação','Transporte','Lazer','Saúde','Roupas','Presentes','Educação','Outro'].map(o=>`<option${r['Categoria']===o?' selected':''}>${o}</option>`).join('')}
+        </select>
+      </div>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-full" onclick="closeModal('mEditar')">Cancelar</button>
+      <button class="btn btn-save btn-full" onclick="saveEditGasto(${idx})">Salvar</button>
+    </div>`;
+  document.getElementById('mEditar').classList.add('open');
+}
+
+async function saveEditGasto(idx) {
+  const data  = document.getElementById('eg_data').value;
+  const valor = parseFloat(document.getElementById('eg_valor').value)||0;
+  const nome  = document.getElementById('eg_nome').value;
+  const pag   = document.getElementById('eg_pag').value;
+  const cat   = document.getElementById('eg_cat').value;
+  const old   = S.gastos[idx];
+  const res = await apiPost('edit_gasto', { oldDate: old['Data'], oldNome: old['Nome'], data, valor, nome, pagamento: pag, categoria: cat });
+  if (res && res.ok) {
+    S.gastos[idx] = { ...old, Data: data, Valor: valor, Nome: nome, 'Forma de pagamento': pag, Categoria: cat };
+    renderGastos();
+    closeModal('mEditar');
+    toast('Gasto atualizado');
+  } else { toast('Erro ao editar','err'); }
+}
+
+async function deleteGasto(idx) {
+  if (!confirm('Apagar este gasto?')) return;
+  const r = S.gastos[idx];
+  const res = await apiPost('delete_gasto', { date: r['Data'], nome: r['Nome'], valor: parseFloat(r['Valor'])||0 });
+  if (res && res.ok) {
+    S.gastos.splice(idx, 1);
+    renderGastos();
+    toast('Gasto apagado');
+  } else { toast('Erro ao apagar','err'); }
+}
+
+// helper: convert any date to yyyy-mm-dd for input[type=date]
+function isoDate(val) {
+  const d = parseAnyDate(val);
+  if (!d || isNaN(d)) return '';
+  return d.toISOString().split('T')[0];
+}
+
 </script>
 </body>
 </html>
