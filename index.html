@@ -469,7 +469,6 @@ body {
   <div class="login-box">
     <div class="login-logo">
       <span class="name">Finanças<br>Matheus Donha</span>
-      <span class="sub">Dashboard 2026</span>
     </div>
     <div class="login-field">
       <label class="login-label">Senha</label>
@@ -493,7 +492,6 @@ body {
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-logo">
       <div class="name">Finanças<br>Matheus Donha</div>
-      <div class="sub">2026</div>
     </div>
     <nav class="sidebar-nav">
       <a class="nav-item active" onclick="nav('overview',this)"><span class="icon">◈</span>Visão Geral</a>
@@ -796,7 +794,7 @@ const GIDS = {
   ganhos:          '1942837948',
   gastos_pessoais: '92640684',
 };
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwv0D8lTs5uTg0alK-t2-fwpvWIr422QVJue2sIocSWJXueGXTb4bsX2Rbk5umrwVT1/exec';
+const APPS_SCRIPT_URL = 'YOUR_APPS_SCRIPT_URL_HERE';
 const SENHA = 'Donha123';
 
 // ── LOGIN ────────────────────────────────────────────────────────
@@ -832,13 +830,74 @@ const PROJ = {
 };
 
 // ── CSV FETCH ────────────────────────────────────────────────────
+// Google Sheets blocks direct fetch (CORS). Use the Google Visualization Query API
+// which returns JSONP — no CORS issues, works from any domain.
+function fetchSheetJSON(gid) {
+  return new Promise((resolve, reject) => {
+    const cbName = 'gs_cb_' + gid + '_' + Date.now();
+    const url = `https://docs.google.com/spreadsheets/d/e/${PUB_ID}/gviz/tq?tqx=out:json&tq=select+*&gid=${gid}&cb=${cbName}`;
+
+    const timeout = setTimeout(() => {
+      delete window[cbName];
+      if (script.parentNode) script.parentNode.removeChild(script);
+      reject(new Error('Timeout gid=' + gid));
+    }, 12000);
+
+    window[cbName] = function(data) {
+      clearTimeout(timeout);
+      delete window[cbName];
+      if (script.parentNode) script.parentNode.removeChild(script);
+      try {
+        const rows = gvizToRows(data);
+        resolve(rows);
+      } catch(e) { reject(e); }
+    };
+
+    const script = document.createElement('script');
+    script.src = url;
+    script.onerror = () => { clearTimeout(timeout); delete window[cbName]; reject(new Error('Script error gid='+gid)); };
+    document.head.appendChild(script);
+  });
+}
+
+// Convert Google Visualization API response to array of objects
+function gvizToRows(data) {
+  if (!data || !data.table) return [];
+  const table = data.table;
+  const cols = (table.cols || []).map(c => (c.label || c.id || '').trim());
+  const rows = [];
+  (table.rows || []).forEach(row => {
+    if (!row.c) return;
+    const obj = {};
+    let hasValue = false;
+    cols.forEach((col, i) => {
+      const cell = row.c[i];
+      let val = '';
+      if (cell && cell.v !== null && cell.v !== undefined) {
+        // Date objects come as Date(year,month,day) — convert to serial-like or ISO
+        if (typeof cell.v === 'object' && cell.f) {
+          val = cell.f; // formatted string like "14/01/2026"
+        } else if (typeof cell.v === 'number') {
+          val = cell.v;
+        } else {
+          val = String(cell.v);
+        }
+        hasValue = true;
+      }
+      obj[col] = val;
+    });
+    if (hasValue) rows.push(obj);
+  });
+  return rows;
+}
+
 async function fetchCSV(gid) {
-  const url = `https://docs.google.com/spreadsheets/d/e/${PUB_ID}/pub?gid=${gid}&single=true&output=csv`;
   try {
-    const r = await fetch(url);
-    const t = await r.text();
-    return parseCSV(t);
-  } catch(e) { console.warn('CSV fetch failed gid='+gid, e); return []; }
+    return await fetchSheetJSON(gid);
+  } catch(e) {
+    console.warn('Sheet fetch failed gid='+gid, e);
+    return [];
+  }
 }
 
 function parseCSV(text) {
@@ -875,40 +934,36 @@ function excelSerial(n) {
   return new Date(ms);
 }
 
+function parseAnyDate(val) {
+  if (!val) return null;
+  const s = String(val).trim();
+  // dd/mm/yyyy
+  const dmy = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (dmy) return new Date(+dmy[3], +dmy[2]-1, +dmy[1]);
+  // yyyy-mm-dd
+  const ymd = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (ymd) return new Date(+ymd[1], +ymd[2]-1, +ymd[3]);
+  // Excel serial (number > 40000)
+  const num = parseFloat(s);
+  if (!isNaN(num) && num > 40000) return excelSerial(num);
+  return null;
+}
+
 function fmtDate(val) {
-  // Try as Excel serial first
-  const num = parseFloat(val);
-  if (!isNaN(num) && num > 40000) {
-    const d = excelSerial(num);
-    if (d) return d.toLocaleDateString('pt-BR');
-  }
-  // Try as ISO string
-  if (val && val.includes('-')) {
-    const d = new Date(val + 'T12:00:00');
-    if (!isNaN(d)) return d.toLocaleDateString('pt-BR');
-  }
+  const d = parseAnyDate(val);
+  if (d && !isNaN(d)) return d.toLocaleDateString('pt-BR');
   return val || '—';
 }
 
 function getMonthIdx(val) {
-  const num = parseFloat(val);
-  if (!isNaN(num) && num > 40000) {
-    const d = excelSerial(num);
-    if (d) return d.getMonth();
-  }
-  if (val && val.includes('-')) {
-    const d = new Date(val + 'T12:00:00');
-    if (!isNaN(d)) return d.getMonth();
-  }
+  const d = parseAnyDate(val);
+  if (d && !isNaN(d)) return d.getMonth();
   return -1;
 }
 
 function getMonthLabel(val) {
-  const num = parseFloat(val);
-  if (!isNaN(num) && num > 40000) {
-    const d = excelSerial(num);
-    if (d) return d.toLocaleDateString('pt-BR', {month:'short', year:'2-digit'});
-  }
+  const d = parseAnyDate(val);
+  if (d && !isNaN(d)) return d.toLocaleDateString('pt-BR', {month:'short', year:'2-digit'});
   return val || '—';
 }
 
@@ -1056,7 +1111,8 @@ function getAliTotal(row) {
   return parseFloat(row['Todos'] || row['Total'] || row['TOTAL'] || Object.values(row)[Object.keys(row).length-1]) || 0;
 }
 function getAliDate(row) {
-  return row['Mês'] || row['Data'] || Object.values(row)[0];
+  // gviz returns dates formatted as "14/01/2026" in the 'Mês' column
+  return row['Mês'] || row['Data'] || row['MÊS'] || Object.values(row)[0];
 }
 
 function renderKPIs() {
@@ -1442,12 +1498,19 @@ function filterGastos() { renderGastosTable(document.getElementById('gastosSearc
 
 // ── SAVE TO SHEET ────────────────────────────────────────────────
 async function sendToSheet(action, data) {
-  if (APPS_SCRIPT_URL==='https://script.google.com/macros/s/AKfycbwv0D8lTs5uTg0alK-t2-fwpvWIr422QVJue2sIocSWJXueGXTb4bsX2Rbk5umrwVT1/exec') {
+  if (APPS_SCRIPT_URL === 'YOUR_APPS_SCRIPT_URL_HERE') {
     console.log('[Apps Script] Not configured. Action:', action, data); return;
   }
   try {
-    await fetch(APPS_SCRIPT_URL, {method:'POST', body:JSON.stringify({action,...data})});
-  } catch(e) { console.error(e); }
+    // Use no-cors — Apps Script doesn't return CORS headers on POST
+    // The request goes through, we just can't read the response
+    await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ action, ...data })
+    });
+  } catch(e) { console.error('sendToSheet error:', e); }
 }
 
 async function saveAporte() {
