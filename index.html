@@ -830,75 +830,53 @@ const PROJ = {
   patrimonio:[20977.71,26471.40,28187.78,28595.12,33683.89,36772.66,50942.96,55113.26,58783.56,65453.86,72124.16,78794.46],
 };
 
-// ── CSV FETCH ────────────────────────────────────────────────────
-// Google Sheets blocks direct fetch (CORS). Use the Google Visualization Query API
-// which returns JSONP — no CORS issues, works from any domain.
-function fetchSheetJSON(gid) {
-  return new Promise((resolve, reject) => {
-    const cbName = 'gs_cb_' + gid + '_' + Date.now();
-    const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&gid=${gid}&cb=${cbName}`;
+// ── API — mesmo padrão do MRD Sports ────────────────────────────
+// Leitura: GET ?action=readXxx  → retorna JSON direto (sem CORS)
+// Escrita: GET ?method=post&payload=BASE64  → sem CORS issue
 
-    const timeout = setTimeout(() => {
-      delete window[cbName];
-      if (script.parentNode) script.parentNode.removeChild(script);
-      reject(new Error('Timeout gid=' + gid));
-    }, 12000);
-
-    window[cbName] = function(data) {
-      clearTimeout(timeout);
-      delete window[cbName];
-      if (script.parentNode) script.parentNode.removeChild(script);
-      try {
-        const rows = gvizToRows(data);
-        resolve(rows);
-      } catch(e) { reject(e); }
-    };
-
-    const script = document.createElement('script');
-    script.src = url;
-    script.onerror = () => { clearTimeout(timeout); delete window[cbName]; reject(new Error('Script error gid='+gid)); };
-    document.head.appendChild(script);
-  });
-}
-
-// Convert Google Visualization API response to array of objects
-function gvizToRows(data) {
-  if (!data || !data.table) return [];
-  const table = data.table;
-  const cols = (table.cols || []).map(c => (c.label || c.id || '').trim());
-  const rows = [];
-  (table.rows || []).forEach(row => {
-    if (!row.c) return;
-    const obj = {};
-    let hasValue = false;
-    cols.forEach((col, i) => {
-      const cell = row.c[i];
-      let val = '';
-      if (cell && cell.v !== null && cell.v !== undefined) {
-        // Date objects come as Date(year,month,day) — convert to serial-like or ISO
-        if (typeof cell.v === 'object' && cell.f) {
-          val = cell.f; // formatted string like "14/01/2026"
-        } else if (typeof cell.v === 'number') {
-          val = cell.v;
-        } else {
-          val = String(cell.v);
-        }
-        hasValue = true;
-      }
-      obj[col] = val;
-    });
-    if (hasValue) rows.push(obj);
-  });
-  return rows;
-}
-
-async function fetchCSV(gid) {
+async function apiGet(action) {
   try {
-    return await fetchSheetJSON(gid);
+    const r = await fetch(APPS_SCRIPT_URL + '?action=' + action);
+    return await r.json();
   } catch(e) {
-    console.warn('Sheet fetch failed gid='+gid, e);
-    return [];
+    console.warn('apiGet failed:', action, e);
+    return null;
   }
+}
+
+async function apiPost(action, data) {
+  try {
+    const json  = JSON.stringify({ action, ...data });
+    const bytes = new TextEncoder().encode(json);
+    let binary  = '';
+    bytes.forEach(b => binary += String.fromCharCode(b));
+    const payload = btoa(binary);
+    const r = await fetch(APPS_SCRIPT_URL + '?method=post&payload=' + encodeURIComponent(payload));
+    return await r.json();
+  } catch(e) {
+    console.warn('apiPost failed:', action, e);
+    return null;
+  }
+}
+
+// Converte {ok, rows: [[...]]} para array de objetos usando 1a linha como header
+function rowsToObjects(rows) {
+  if (!rows || rows.length < 2) return [];
+  const headers = rows[0].map(h => String(h).trim());
+  return rows.slice(1)
+    .filter(r => r.some(v => v !== '' && v !== null && v !== undefined))
+    .map(r => {
+      const obj = {};
+      headers.forEach((h, i) => obj[h] = r[i] !== undefined ? r[i] : '');
+      return obj;
+    });
+}
+
+async function fetchCSV(action) {
+  const res = await apiGet(action);
+  if (res && res.ok && res.rows) return rowsToObjects(res.rows);
+  console.warn('fetchCSV got bad response for', action, res);
+  return [];
 }
 
 function parseCSV(text) {
@@ -1044,43 +1022,41 @@ async function loadAll() {
 
   try {
     const [aliRows, apRows, rgRows, gpRows] = await Promise.all([
-      fetchCSV(GIDS.alinhamento),
-      fetchCSV(GIDS.aportes),
-      fetchCSV(GIDS.resgates),
-      fetchCSV(GIDS.gastos_pessoais),
+      fetchCSV('readAlinhamento'),
+      fetchCSV('readAportes'),
+      fetchCSV('readResgates'),
+      fetchCSV('readGastos'),
     ]);
 
-    // Filter valid rows
+    // alinhamento — cada linha é um snapshot com coluna "Todos"
     S.ali = aliRows.filter(r => {
-      const dateVal = r['Mês'] || r['Data'] || Object.values(r)[0];
-      const totalVal = r['Todos'] || r['Total'] || r['TOTAL'] || Object.values(r)[Object.keys(r).length-1];
-      const num = parseFloat(dateVal);
-      return !isNaN(num) && num > 40000 && parseFloat(totalVal) > 0;
+      const total = parseFloat(r['Todos'] || r['Total'] || r['TOTAL'] || 0);
+      return total > 0;
     });
 
     S.aportes = apRows.filter(r => {
-      const v = parseFloat(r['APORTE'] || r['Aporte'] || r['aporte']);
-      return !isNaN(v) && v > 0;
+      const v = parseFloat(r['APORTE'] || r['Aporte'] || r['aporte'] || 0);
+      return v > 0;
     });
 
     S.resgates = rgRows.filter(r => {
-      const v = parseFloat(r['Valor'] || r['VALOR']);
-      return !isNaN(v) && v > 0;
+      const v = parseFloat(r['Valor'] || r['VALOR'] || 0);
+      return v > 0;
     });
 
     S.gastos = gpRows.filter(r => {
-      const v = parseFloat(r['Valor'] || r['VALOR']);
-      return r['Data'] && !isNaN(v) && v > 0;
+      const v = parseFloat(r['Valor'] || r['VALOR'] || 0);
+      return r['Data'] && v > 0;
     });
 
-    // Check for meta in aportes sheet
+    // Meta salva na planilha (coluna G da aba aportes)
     const metaRow = apRows.find(r => {
-      const gVal = r['META'] || r['Meta'] || r['meta'] || Object.values(r)[6];
-      return parseFloat(gVal) > 0;
+      const gVal = parseFloat(r['META'] || r['Meta'] || r['meta'] || r['G'] || 0);
+      return gVal > 0;
     });
     if (metaRow) {
-      const mv = parseFloat(metaRow['META']||metaRow['Meta']||metaRow['meta']||Object.values(metaRow)[6]);
-      if (!isNaN(mv) && mv > 0) S.meta = mv;
+      const mv = parseFloat(metaRow['META']||metaRow['Meta']||metaRow['meta']||0);
+      if (mv > 0) S.meta = mv;
     }
 
     renderAll();
@@ -1112,7 +1088,6 @@ function getAliTotal(row) {
   return parseFloat(row['Todos'] || row['Total'] || row['TOTAL'] || Object.values(row)[Object.keys(row).length-1]) || 0;
 }
 function getAliDate(row) {
-  // gviz returns dates formatted as "14/01/2026" in the 'Mês' column
   return row['Mês'] || row['Data'] || row['MÊS'] || Object.values(row)[0];
 }
 
@@ -1199,7 +1174,8 @@ function renderGanhosChart() {
 function renderOverviewTable() {
   const byMonth = {};
   S.ali.forEach(r => {
-    const m = getMonthIdx(getAliDate(r));
+    const dateVal = getAliDate(r);
+    const m = getMonthIdx(dateVal);
     if (m >= 0) byMonth[m] = getAliTotal(r);
   });
 
@@ -1319,7 +1295,8 @@ function renderProj() {
   killChart('proj');
   const byMonth = {};
   S.ali.forEach(r => {
-    const m = getMonthIdx(getAliDate(r));
+    const dateVal = getAliDate(r);
+    const m = getMonthIdx(dateVal);
     if (m >= 0) byMonth[m] = getAliTotal(r);
   });
 
@@ -1499,19 +1476,9 @@ function filterGastos() { renderGastosTable(document.getElementById('gastosSearc
 
 // ── SAVE TO SHEET ────────────────────────────────────────────────
 async function sendToSheet(action, data) {
-  if (APPS_SCRIPT_URL === 'YOUR_APPS_SCRIPT_URL_HERE') {
-    console.log('[Apps Script] Not configured. Action:', action, data); return;
-  }
-  try {
-    // Use no-cors — Apps Script doesn't return CORS headers on POST
-    // The request goes through, we just can't read the response
-    await fetch(APPS_SCRIPT_URL, {
-      method: 'POST',
-      mode: 'no-cors',
-      headers: { 'Content-Type': 'text/plain' },
-      body: JSON.stringify({ action, ...data })
-    });
-  } catch(e) { console.error('sendToSheet error:', e); }
+  const res = await apiPost(action, data);
+  if (!res || !res.ok) console.warn('sendToSheet failed:', action, res);
+  return res;
 }
 
 async function saveAporte() {
