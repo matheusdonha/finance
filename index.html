@@ -799,8 +799,12 @@ body {
         <div class="form-group"><label class="form-label">Livre</label><input class="form-input" type="number" step="0.01" placeholder="0,00" id="b_livre"></div>
       </div>
       <div class="form-row">
-        <div class="form-group"><label class="form-label">Nubank (caixinhas)</label><input class="form-input" type="number" step="0.01" placeholder="0,00" id="b_nubank"></div>
+        <div class="form-group"><label class="form-label">Nubank (caixinhas) — valor total</label><input class="form-input" type="number" step="0.01" placeholder="ex: 2000" id="b_nubank_raw"></div>
+        <div class="form-group"><label class="form-label">Nubank líquido (- MRD)</label><div style="background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:10px 12px;font-family:'Syne',sans-serif;font-weight:700;color:var(--green)" id="b_nubank_display">R$ 0,00</div></div>
+      </div>
+      <div class="form-row">
         <div class="form-group"><label class="form-label">Dinheiro</label><input class="form-input" type="number" step="0.01" placeholder="0,00" id="b_dinheiro"></div>
+        <div class="form-group"></div>
       </div>
       <div class="form-row">
         <div class="form-group"><label class="form-label">Home Broker PAI</label><input class="form-input" type="number" step="0.01" placeholder="0,00" id="b_hbpai"></div>
@@ -815,8 +819,8 @@ body {
         <div class="form-group"><label class="form-label">A investir</label><input class="form-input" type="number" step="0.01" placeholder="0,00" id="b_ainvestir"></div>
       </div>
       <div class="form-row">
-        <div class="form-group"><label class="form-label">Cartão (este mês)</label><input class="form-input" type="number" step="0.01" placeholder="0,00" id="b_cartao"></div>
-        <div class="form-group"><label class="form-label">Próximo(s)</label><input class="form-input" type="number" step="0.01" placeholder="0,00" id="b_proximo"></div>
+        <div class="form-group"><label class="form-label">Cartão (este mês) <span style="color:var(--red)">− subtrai</span></label><input class="form-input" type="number" step="0.01" placeholder="0,00" id="b_cartao"></div>
+        <div class="form-group"><label class="form-label">Próximo(s) <span style="color:var(--red)">− subtrai</span></label><input class="form-input" type="number" step="0.01" placeholder="0,00" id="b_proximo"></div>
       </div>
       <div class="form-group"><label class="form-label">Outros (PicPay, CartPanda, etc.)</label><input class="form-input" type="number" step="0.01" placeholder="0,00" id="b_outros"></div>
       <div class="form-group"><label class="form-label">Observação</label><input class="form-input" type="text" placeholder="opcional..." id="b_obs"></div>
@@ -1616,10 +1620,11 @@ function openModal(id) {
     const today = new Date().toLocaleDateString('pt-BR');
     document.getElementById('balData').textContent = today;
     // wire up live total
-    const fields = ['b_mrd','b_atm','b_inter','b_livre','b_nubank','b_dinheiro',
-                    'b_hbpai','b_hbinter','b_btg','b_binance','b_dolar','b_ainvestir','b_outros'];
-    fields.forEach(id => {
-      const el = document.getElementById(id);
+    const fields = ['b_mrd','b_atm','b_inter','b_livre','b_nubank_raw','b_dinheiro',
+                    'b_hbpai','b_hbinter','b_btg','b_binance','b_dolar','b_ainvestir',
+                    'b_outros','b_cartao','b_proximo'];
+    fields.forEach(fid => {
+      const el = document.getElementById(fid);
       if (el) el.oninput = calcBalTotal;
     });
   } else {
@@ -1630,40 +1635,54 @@ function openModal(id) {
 }
 
 function calcBalTotal() {
-  const fields = ['b_mrd','b_atm','b_inter','b_livre','b_nubank','b_dinheiro',
-                  'b_hbpai','b_hbinter','b_btg','b_binance','b_dolar','b_ainvestir','b_outros'];
-  const total = fields.reduce((s, id) => s + (parseFloat(document.getElementById(id)?.value)||0), 0);
+  const g = id => parseFloat(document.getElementById(id)?.value)||0;
+  // Nubank real = digitado - Banco MRD
+  const nubankReal = Math.max(0, g('b_nubank_raw') - g('b_mrd'));
+  const nubankEl = document.getElementById('b_nubank_display');
+  if (nubankEl) nubankEl.textContent = 'R$ ' + brl(nubankReal);
+
+  const total = g('b_mrd') + g('b_atm') + g('b_inter') + g('b_livre') +
+                nubankReal + g('b_dinheiro') +
+                g('b_hbpai') + g('b_hbinter') + g('b_btg') +
+                g('b_binance') + g('b_dolar') + g('b_ainvestir') + g('b_outros') -
+                g('b_cartao') - g('b_proximo');
   document.getElementById('balTotal').textContent = 'R$ ' + brl(total);
 }
 
 async function saveBalanceamento() {
   const g = id => parseFloat(document.getElementById(id)?.value)||0;
   const hoje = new Date().toLocaleDateString('pt-BR');
+  const nubankReal = Math.max(0, g('b_nubank_raw') - g('b_mrd'));
   const outros = g('b_outros');
-  const total = g('b_mrd')+g('b_atm')+g('b_inter')+g('b_livre')+g('b_nubank')+
-                g('b_dinheiro')+g('b_hbpai')+g('b_hbinter')+g('b_btg')+
-                g('b_binance')+g('b_dolar')+g('b_ainvestir')+outros;
+  const total = g('b_mrd') + g('b_atm') + g('b_inter') + g('b_livre') +
+                nubankReal + g('b_dinheiro') +
+                g('b_hbpai') + g('b_hbinter') + g('b_btg') +
+                g('b_binance') + g('b_dolar') + g('b_ainvestir') + outros -
+                g('b_cartao') - g('b_proximo');
   const obs = document.getElementById('b_obs')?.value||'';
   const row = [hoje, g('b_mrd'), g('b_atm'), 0, g('b_inter'), g('b_livre'),
-               g('b_nubank'), 0, g('b_dinheiro'), g('b_hbpai'), g('b_hbinter'),
-               g('b_btg'), g('b_binance'), g('b_dolar'), g('b_ainvestir'), 0, 0, total, obs];
+               nubankReal, 0, g('b_dinheiro'), g('b_hbpai'), g('b_hbinter'),
+               g('b_btg'), g('b_binance'), g('b_dolar'), g('b_ainvestir'),
+               -g('b_cartao'), -g('b_proximo'), total, obs];
   const res = await apiPost('append_alinhamento', { row });
   if (res && res.ok) {
-    // add to local state
     S.ali.push({
       'Mês': hoje, 'Banco MRD': g('b_mrd'), 'BANCO 62775': g('b_atm'),
       'Banco Inter Matheus': g('b_inter'), 'Meu dinheiro (livre)': g('b_livre'),
-      'Nubank (caxinhas)': g('b_nubank'), 'Dinheiro': g('b_dinheiro'),
+      'Nubank (caxinhas)': nubankReal, 'Dinheiro': g('b_dinheiro'),
       'Home Broker PAI': g('b_hbpai'), 'Home Broker Inter': g('b_hbinter'),
       'BTG': g('b_btg'), 'Binance': g('b_binance'), 'Dólar': g('b_dolar'),
-      'A investir': g('b_ainvestir'), 'Outros': outros, 'Todos': total, 'Obs:': obs
+      'A investir': g('b_ainvestir'), 'Outros': outros,
+      'Cartão (ESSE MÊS)': -g('b_cartao'), 'Próximo(s)': -g('b_proximo'),
+      'Todos': total, 'Obs:': obs
     });
     renderEvol(); renderKPIs(); renderOverviewChart();
     closeModal('mBalanceamento');
-    // clear fields
-    ['b_mrd','b_atm','b_inter','b_livre','b_nubank','b_dinheiro','b_hbpai',
-     'b_hbinter','b_btg','b_binance','b_dolar','b_ainvestir','b_outros','b_obs']
+    ['b_mrd','b_atm','b_inter','b_livre','b_nubank_raw','b_dinheiro','b_hbpai',
+     'b_hbinter','b_btg','b_binance','b_dolar','b_ainvestir','b_outros',
+     'b_cartao','b_proximo','b_obs']
       .forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
+    document.getElementById('b_nubank_display').textContent = 'R$ 0,00';
     toast('Balanceamento salvo!');
   } else {
     toast('Erro ao salvar balanceamento', 'err');
