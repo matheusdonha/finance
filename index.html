@@ -796,7 +796,7 @@ const GIDS = {
   ganhos:          '1942837948',
   gastos_pessoais: '92640684',
 };
-const APPS_SCRIPT_URL = 'YOUR_APPS_SCRIPT_URL_HERE';
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwv0D8lTs5uTg0alK-t2-fwpvWIr422QVJue2sIocSWJXueGXTb4bsX2Rbk5umrwVT1/exec';
 const SENHA = 'Donha123';
 
 // ── LOGIN ────────────────────────────────────────────────────────
@@ -1442,7 +1442,7 @@ function filterGastos() { renderGastosTable(document.getElementById('gastosSearc
 
 // ── SAVE TO SHEET ────────────────────────────────────────────────
 async function sendToSheet(action, data) {
-  if (APPS_SCRIPT_URL==='YOUR_APPS_SCRIPT_URL_HERE') {
+  if (APPS_SCRIPT_URL==='https://script.google.com/macros/s/AKfycbwv0D8lTs5uTg0alK-t2-fwpvWIr422QVJue2sIocSWJXueGXTb4bsX2Rbk5umrwVT1/exec') {
     console.log('[Apps Script] Not configured. Action:', action, data); return;
   }
   try {
