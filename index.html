@@ -260,6 +260,7 @@ body {
 .editable { background: transparent; border: 1px solid transparent; border-radius: 4px; color: inherit; font-family: inherit; font-size: inherit; font-weight: inherit; padding: 2px 6px; transition: all var(--tr); cursor: pointer; min-width: 80px; display: inline-block; }
 .editable:hover { border-color: var(--border2); background: var(--surface); }
 .editable:focus { outline: none; border-color: var(--green); background: var(--surface); cursor: text; }
+.row-total td { border-top: 2px solid var(--border2); background: var(--surface); }
 
 /* ── ACCOUNT CHIPS ─────────────────────────────── */
 .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
@@ -353,7 +354,7 @@ body {
       <a class="nav-item" onclick="nav('aportes',this)"><span class="icon">⊕</span>Aportes</a>
       <a class="nav-item" onclick="nav('resgates',this)"><span class="icon">⊖</span>Resgates</a>
       <a class="nav-item" onclick="nav('gastos',this)"><span class="icon">◎</span>Gastos Pessoais</a>
-      <a class="nav-item" onclick="nav('notas',this)"><span class="icon">✓</span>Notas</a>
+      <a class="nav-item" onclick="nav('notas',this)"><span class="icon">✓</span>Entradas</a>
       <a class="nav-item" onclick="nav('dividas',this)"><span class="icon">⇄</span>Dívidas</a>
     </nav>
     <div class="sidebar-footer">
@@ -420,10 +421,10 @@ body {
         </div>
         <div class="card-body-flush table-scroll">
           <table class="data-table"><thead><tr>
-            <th>Data</th><th>Banco MRD</th><th>ATM+</th><th>CartPanda</th><th>Inter</th><th>Livre</th>
+            <th>Data</th><th class="text-green">Total</th><th>Banco MRD</th><th>ATM+</th><th>CartPanda</th><th>Inter</th><th>Livre</th>
             <th>Nubank</th><th>PicPay</th><th>Dinheiro</th><th>HB PAI</th><th>HB Inter</th>
             <th>BTG</th><th>Binance</th><th>Dólar</th><th>A investir</th><th>Cartão</th><th>Próximo(s)</th>
-            <th>Total</th><th>Obs.</th><th></th>
+            <th>Obs.</th><th></th>
           </tr></thead><tbody id="tbEvol"><tr class="spinner-row"><td colspan="19"><div class="spinner"></div></td></tr></tbody></table>
         </div>
       </div>
@@ -583,7 +584,7 @@ body {
     <!-- NOTAS -->
     <div class="page" id="page-notas">
       <div class="section-header">
-        <div><div class="section-title"><span class="accent">Notas</span></div><div class="section-sub">Projetado × Entrou × Nota emitida</div></div>
+        <div><div class="section-title"><span class="accent">Entradas</span></div><div class="section-sub">Projetado × Entrou × Nota emitida</div></div>
       </div>
       <div class="card">
         <div class="card-body"><div class="chart-wrap" style="height:260px"><canvas id="chartNotas"></canvas></div></div>
@@ -591,7 +592,7 @@ body {
       <div class="card">
         <div class="card-header">
           <span class="card-title">Comparativo mensal</span>
-          <span class="badge badge-muted">clique em Entrou / Nota para editar</span>
+          <span class="badge badge-muted">clique para editar Projetado / Entrou / Nota</span>
         </div>
         <div class="card-body-flush table-scroll">
           <table class="data-table"><thead><tr>
@@ -971,7 +972,7 @@ function killChart(k) { if (S.charts[k]) { S.charts[k].destroy(); delete S.chart
 const PAGE_LABELS = {
   overview:'Visão Geral', evolucao:'Evolução', projecao:'Projeção',
   aportes:'Aportes', resgates:'Resgates', gastos:'Gastos Pessoais',
-  notas:'Notas', dividas:'Dívidas'
+  notas:'Entradas', dividas:'Dívidas'
 };
 function nav(page, el) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -980,6 +981,19 @@ function nav(page, el) {
   if (el) el.classList.add('active');
   document.getElementById('pageName').textContent = PAGE_LABELS[page]||page;
   closeSidebar();
+  // Charts initialized while their page was hidden (display:none) get a
+  // zero-size canvas and never redraw on their own. Re-render the chart
+  // for the page we're navigating into, now that it's visible.
+  const chartRenderers = {
+    overview: renderOverviewChart, evolucao: renderEvolChart, projecao: renderProj,
+    gastos: renderGastosCharts, notas: renderNotas
+  };
+  const fn = chartRenderers[page];
+  if (fn) requestAnimationFrame(() => fn());
+}
+function goToEntradas() {
+  const navEl = [...document.querySelectorAll('.nav-item')].find(n => n.getAttribute('onclick') === "nav('notas',this)");
+  nav('notas', navEl);
 }
 function toggleSidebar() {
   document.getElementById('sidebar').classList.toggle('open');
@@ -1164,10 +1178,10 @@ function renderKPIs() {
       <div class="kpi-value"><span class="currency">R$</span> ${brl(curr)}</div>
       <div class="kpi-delta ${delta>=0?'up':'down'}">${delta>=0?'↑':'↓'} R$ ${brl(Math.abs(delta))} (${dpct}%) vs anterior</div>
     </div>
-    <div class="kpi-card" style="--accent-color:var(--blue)">
+    <div class="kpi-card" style="--accent-color:var(--blue);cursor:pointer" onclick="goToEntradas()">
       <div class="kpi-label">Entradas Reais Acumuladas</div>
       <div class="kpi-value"><span class="currency">R$</span> ${brl(totalEntradas)}</div>
-      <div class="kpi-delta">média de R$ ${brl(mediaEntradas)}/mês (${mesesComEntrada} ${mesesComEntrada===1?'mês':'meses'})</div>
+      <div class="kpi-delta">média de R$ ${brl(mediaEntradas)}/mês (${mesesComEntrada} ${mesesComEntrada===1?'mês':'meses'}) · editar →</div>
     </div>
     <div class="kpi-card" style="--accent-color:var(--gold)">
       <div class="kpi-label">Meta de Aportes</div>
@@ -1309,6 +1323,7 @@ function renderEvolTable() {
     const idx = ali.length - 1 - i;
     return `<tr>
       <td class="nowrap">${fmtDate(getAliDate(r))}</td>
+      <td class="text-green bold nowrap">R$ ${brl(getAliTotal(r))}</td>
       <td>${v(r['Banco MRD'])}</td>
       <td>${v(r['BANCO 62775'])}</td>
       <td>${v(r['CartPanda'])}</td>
@@ -1325,7 +1340,6 @@ function renderEvolTable() {
       <td>${v(r['A investir'])}</td>
       <td>${v(r['Cartão (ESSE MÊS)'])}</td>
       <td>${v(r['Próximo(s)'])}</td>
-      <td class="text-green bold">R$ ${brl(getAliTotal(r))}</td>
       <td class="text-muted">${r['Obs:']||'—'}</td>
       <td><button class="btn" style="padding:4px 8px;font-size:10px;color:var(--red);border-color:#FF4D6D30" onclick="deleteBalanceamento(${idx})">✕</button></td>
     </tr>`;
@@ -1347,8 +1361,9 @@ function renderProj() {
   const P = S.mesAMes;
   const byMonth = {};
   S.ali.forEach(r => {
-    const m = getMonthIdx(getAliDate(r));
-    if (m >= 0) byMonth[m] = getAliTotal(r);
+    const d = parseAnyDate(getAliDate(r));
+    if (!d || isNaN(d) || d.getFullYear() !== 2026) return;
+    byMonth[d.getMonth()] = getAliTotal(r);
   });
 
   const ctx = document.getElementById('chartProj').getContext('2d');
@@ -1603,34 +1618,69 @@ function renderNotas() {
     options:{...CD}
   });
 
-  document.getElementById('tbNotas').innerHTML = linhas.map(l => {
+  document.getElementById('tbNotas').innerHTML = linhas.map((l, i) => {
     const naoNotado = (l.entrou!==null && l.notaEmitida!==null) ? l.entrou - l.notaEmitida : null;
     const divReal = (l.entrou!==null && l.projetado!==null) ? l.entrou - l.projetado : null;
     const cls = divReal===null ? '' : (divReal>=0?'text-green':'text-red');
     return `<tr>
       <td><strong>${l.mes}</strong></td>
-      <td class="text-muted">${l.projetado!==null?brl(l.projetado):'—'}</td>
       <td>
-        <span class="editable" contenteditable="true" data-mes="${l.mesLower}" data-field="entrou"
+        <span class="editable text-muted" contenteditable="true" data-mes="${l.mesLower}" data-month-idx="${i}" data-field="projetado"
+          onblur="saveNotaCell(this)" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}"
+        >${l.projetado!==null?brl(l.projetado):''}</span>
+      </td>
+      <td>
+        <span class="editable" contenteditable="true" data-mes="${l.mesLower}" data-month-idx="${i}" data-field="entrou"
           onblur="saveNotaCell(this)" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}"
         >${l.entrou!==null?brl(l.entrou):''}</span>
       </td>
       <td>
-        <span class="editable" contenteditable="true" data-mes="${l.mesLower}" data-field="nota"
+        <span class="editable" contenteditable="true" data-mes="${l.mesLower}" data-month-idx="${i}" data-field="nota"
           onblur="saveNotaCell(this)" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}"
         >${l.notaEmitida!==null?brl(l.notaEmitida):''}</span>
       </td>
       <td class="${naoNotado>0?'text-gold':'text-muted'}">${naoNotado!==null?'R$ '+brl(naoNotado):'—'}</td>
       <td class="${cls}">${divReal!==null?'R$ '+brl(divReal):'—'}</td>
     </tr>`;
-  }).join('');
+  }).join('') + (() => {
+    const sumProj = linhas.reduce((s,l)=>s+(l.projetado||0),0);
+    const sumEntrou = linhas.reduce((s,l)=>s+(l.entrou||0),0);
+    const sumNota = linhas.reduce((s,l)=>s+(l.notaEmitida||0),0);
+    const sumNaoNotado = linhas.reduce((s,l)=>{
+      const n = (l.entrou!==null && l.notaEmitida!==null) ? l.entrou - l.notaEmitida : 0;
+      return s + n;
+    },0);
+    const sumDiv = sumEntrou - sumProj;
+    const cls = sumDiv>=0?'text-green':'text-red';
+    return `<tr class="row-total">
+      <td><strong>Total</strong></td>
+      <td class="bold">R$ ${brl(sumProj)}</td>
+      <td class="bold text-green">R$ ${brl(sumEntrou)}</td>
+      <td class="bold">R$ ${brl(sumNota)}</td>
+      <td class="${sumNaoNotado>0?'text-gold':''} bold">R$ ${brl(sumNaoNotado)}</td>
+      <td class="${cls} bold">R$ ${brl(sumDiv)}</td>
+    </tr>`;
+  })();
 }
 
 async function saveNotaCell(el) {
   const mes = el.dataset.mes;
   const field = el.dataset.field;
+  const monthIdx = parseInt(el.dataset.monthIdx, 10);
   const raw = el.textContent.replace(/[^0-9,.-]/g,'').replace(',','.');
   const val = raw === '' ? null : (parseFloat(raw) || 0);
+
+  if (field === 'projetado') {
+    const res = await apiPost('edit_projetado', { monthIndex: monthIdx, valor: val||0 });
+    if (res && res.ok) {
+      if (S.mesAMes) S.mesAMes.entradas[monthIdx] = val||0;
+      toast('Projeção atualizada');
+      renderNotas();
+    } else {
+      toast('Erro ao salvar', 'err');
+    }
+    return;
+  }
 
   let row = S.notas.find(r => String(r['Mês']||'').toLowerCase().trim() === mes);
   if (!row) { row = { 'Mês': mes }; S.notas.push(row); }
